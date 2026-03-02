@@ -374,11 +374,20 @@ if __name__ == "__main__":
                         logging.info(f"  Digital Input {i}: value={din.value}")
                 start_time = now
             for name, interface in interfaces.items():
+                if interface.servos and all(servo.stopped for servo in interface.servos):
+                    for servo in interface.servos:
+                        servo.enabled = True
+                        servo.set_speed_limits(100, 20000) # Set speed limits to 10-2000 degrees per second
+                        servo.set_acceleration(2000)
+                        position = random.choice([0, 900, 1800]) # Move to either 0, 90, or 180 degrees
+                        logging.info(f"Moving servo {servo.channel} on interface {name} to position {position/10.0} degrees")
+                        servo.move_to(position)
+
                 for stepper in interface.steppers:
                     if not stepper.stopped:
                         continue
                     # Randomly decide to move the stepper
                     steps = random.randint(-1000, 1000)
-                    logging.info(f"Moving stepper on interface {name} by {steps} steps")
+                    logging.info(f"Moving stepper {stepper.channel} on interface {name} by {steps} steps")
                     stepper.move_steps(steps)
             time.sleep(0.01)
